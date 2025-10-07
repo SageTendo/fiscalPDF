@@ -5,13 +5,13 @@ from pymupdf import Document, FileDataError
 import re
 import numpy as np
 
-from src.api.error import (
+from error import (
     FailedToExtractCreditNotesException,
     NothingToModifyException,
     PathNotFoundException,
     PathNotPDFFileException,
 )
-from ...config import OUTPUT_DIR
+from config import OUTPUT_DIR
 
 
 class PAD:
@@ -34,7 +34,7 @@ FLAGS = [re.IGNORECASE, re.MULTILINE, re.DOTALL]
 SHRINK_WIDTH_BY = 0
 
 
-def open_pdf_document(file_path: Path):
+def open_pdf_document(file_path: str):
     path = Path(file_path)
     if not path.exists():
         raise PathNotFoundException(file_path)
@@ -49,22 +49,21 @@ def open_pdf_document(file_path: Path):
 
 
 def get_pages_with_credit_notes(document: Document):
-    pages_with_credit_notes = []
+    pages = []
     for page_num in range(len(document)):
         page = document.load_page(page_num)
         if re.search(CREDIT_NOTE_PATTERN, page.get_text()):
-            pages_with_credit_notes.append(page_num)
-    return pages_with_credit_notes
+            pages.append(page_num)
+    return pages
 
 
 def extract_credit_notes(extracted: str):
     return re.findall(CREDIT_NOTE_PATTERN, extracted, re.IGNORECASE)
 
 
-def get_output_path(filename: Path):
-    return OUTPUT_DIR.joinpath(
-        Path(filename).with_name(f"modified_{Path(filename).stem}.pdf")
-    )
+def get_output_path(filename: str):
+    output_name = f"modified_{Path(filename).name}"
+    return OUTPUT_DIR.joinpath(output_name)
 
 
 def replace_matches_in_pdf(document: Document, pages, replace_text: str):
@@ -107,6 +106,6 @@ def replace_matches_in_pdf(document: Document, pages, replace_text: str):
 
 
 if __name__ == "__main__":
-    document = open_pdf_document("19912-October 25.pdf")
-    pages_with_credit_notes = get_pages_with_credit_notes(document)
-    replace_matches_in_pdf(document, pages_with_credit_notes, "CN")
+    pdf = open_pdf_document("19912-October 25.pdf")
+    pages_with_credit_notes = get_pages_with_credit_notes(pdf)
+    replace_matches_in_pdf(pdf, pages_with_credit_notes, "CN")
