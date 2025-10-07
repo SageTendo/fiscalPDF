@@ -20,6 +20,23 @@ def save_uploaded_file(file):
     return save_path
 
 
+def process_file(file_path):
+    try:
+        document = open_pdf_document(file_path)
+        pages_with_credit_notes = get_pages_with_credit_notes(document)
+        replace_matches_in_pdf(document, pages_with_credit_notes, "CN")
+    except PathNotFoundException:
+        flash(f"{file_path} does not exist")
+    except PathNotPDFFileException:
+        flash(f"{file_path} is not a PDF file")
+    except NothingToModifyException:
+        flash(f"No changes to make to {file_path}")
+    except FailedToExtractCreditNotesException:
+        flash(f"Failed to extract credit notes from {file_path}")
+    finally:
+        os.remove(file_path)
+
+
 @app.route("/")
 def home():
     processed_files = [{
@@ -37,20 +54,7 @@ def upload():
         return redirect(url_for('home'))
 
     uploaded_file = save_uploaded_file(file)
-    try:
-        document = open_pdf_document(uploaded_file)
-        pages_with_credit_notes = get_pages_with_credit_notes(document)
-        replace_matches_in_pdf(document, pages_with_credit_notes, "CN")
-    except PathNotFoundException:
-        flash(f"{file.filename} does not exist")
-    except PathNotPDFFileException:
-        flash(f"{file.filename} is not a PDF file")
-    except NothingToModifyException:
-        flash(f"No changes to make to {file.filename}")
-    except FailedToExtractCreditNotesException:
-        flash(f"Failed to extract credit notes from {file.filename}")
-    finally:
-        os.remove(uploaded_file)
+    process_file(uploaded_file)
     return redirect(url_for('home'))
 
 
@@ -63,20 +67,7 @@ def bulk_upload():
 
     for file in files:
         uploaded_file = save_uploaded_file(file)
-        try:
-            document = open_pdf_document(uploaded_file)
-            pages_with_credit_notes = get_pages_with_credit_notes(document)
-            replace_matches_in_pdf(document, pages_with_credit_notes, "CN")
-        except PathNotFoundException:
-            flash(f"{file.filename} does not exist")
-        except PathNotPDFFileException:
-            flash(f"{file.filename} is not a PDF file")
-        except NothingToModifyException:
-            flash(f"No changes to make to {file.filename}")
-        except FailedToExtractCreditNotesException:
-            flash(f"Failed to extract credit notes from {file.filename}")
-        finally:
-            os.remove(uploaded_file)
+        process_file(uploaded_file)
     return redirect(url_for('home'))
 
 
