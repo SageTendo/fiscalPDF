@@ -66,12 +66,89 @@ def replace_matches_in_pdf(document: fitz.Document, pages, replace_text: str):
             width=page_rect.width, height=page_rect.height
         )
 
+        # Iterate through all graphics and redraw them
+        paths = page.get_drawings()
+        shape = new_page.new_shape()
+        for path in paths:
+            # ------------------------------------
+            # draw each entry of the 'items' list
+            # ------------------------------------
+            for item in path["items"]:
+                if item[0] == "l":  # line
+                    shape.draw_line(item[1], item[2])
+                elif item[0] == "re":  # rectangle
+                    shape.draw_rect(item[1])
+                elif item[0] == "qu":  # quad
+                    shape.draw_quad(item[1])
+                elif item[0] == "c":  # curve
+                    shape.draw_bezier(item[1], item[2], item[3], item[4])
+                else:
+                    raise ValueError("unhandled drawing", item)
+            # ------------------------------------------------------
+            # all items are drawn, now apply the common properties
+            # to finish the path
+            # ------------------------------------------------------
+            # Safely extract and normalize values
+            line_join = path.get("lineJoin")
+            if line_join is None:
+                line_join = 0
+
+            line_cap = path.get("lineCap")
+            if isinstance(line_cap, (list, tuple)):
+                line_cap = max(line_cap)
+            elif line_cap is None:
+                line_cap = 0
+
+            stroke_opacity = path.get("stroke_opacity") or 1.0
+            fill_opacity = path.get("fill_opacity") or 1.0
+
+            color = path.get("color")
+            fill = path.get("fill")
+            dashes = path.get("dashes")
+
+            width = path.get("width")
+            if width is None:
+                width = 1.0
+
+            # Apply the finished style safely
+            shape.finish(
+                fill=fill,
+                color=color,
+                dashes=dashes,
+                even_odd=path.get("even_odd", True),
+                closePath=path.get("closePath", False),
+                lineJoin=line_join,
+                lineCap=line_cap,
+                width=width,
+                stroke_opacity=stroke_opacity,
+                fill_opacity=fill_opacity,
+            )
+
+        # all paths processed - commit the shape to its page
+        shape.commit()
+
+        # iterate over all images on the page
+        image_infos = page.get_image_info(xrefs=True)
+        for info in image_infos:
+            xref = info["xref"]
+            bbox = info["bbox"]
+
+            if bbox is None:
+                # fallback — if bbox not found, draw full page
+                bbox = page.rect
+
+            # make a pixmap for the image
+            pix = pymupdf.Pixmap(document, xref)
+
+            # draw the image at the same position
+            new_page.insert_image(bbox, pixmap=pix)
+            pix = None  # free memory
+
         # Iterate through all spans and rebuild text
-        for block in text_dict["blocks"]: # type: ignore
-            for line in block.get("lines", []): # type: ignore
+        for block in text_dict["blocks"]:  # type: ignore
+            for line in block.get("lines", []):  # type: ignore
                 for span in line.get("spans", []):
                     text = span["text"]
-
                     if re.search(CREDIT_NOTE_PATTERN, text, re.IGNORECASE):
                         text = re.sub(
                             CREDIT_NOTE_PATTERN, replace_text, text, flags=re.IGNORECASE
@@ -79,7 +156,7 @@ def replace_matches_in_pdf(document: fitz.Document, pages, replace_text: str):
 
                     # Draw text at the same location
                     new_page.insert_text(
-                        (span["bbox"][0], span["bbox"][1]),
+                        (span["bbox"][0], span["bbox"][1] + 6),
                         text,
                         fontsize=span["size"],
                         fontname="helv",  # use standard font to avoid missing font errors
