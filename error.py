@@ -3,11 +3,9 @@ class NothingToModifyException(Exception):
         super().__init__(f"No changes to make to the provided PDF file: {doc_name}")
 
 
-class FailedToExtractCreditNotesException(Exception):
-    def __init__(self, doc_name: str):
-        super().__init__(
-            f"Failed to extract credit notes from the provided PDF file: {doc_name}"
-        )
+class PDFCreationFailException(Exception):
+    def __init__(self, err: str) -> None:
+        super().__init__(err)
 
 
 class PathNotFoundException(Exception):
