@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import TestCase
 from parameterized import parameterized
 
-from pdf import (
+from src.lib.pdf_service import (
     CREDIT_NOTE_PATTERN,
     get_pages_with_credit_notes,
     open_pdf_document,

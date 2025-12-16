@@ -11,22 +11,12 @@ from flask import (
     url_for,
 )
 
-from error import (
-    NothingToModifyException,
-    PDFCreationFailException,
-    PathNotFoundException,
-    PathNotPDFFileException,
-)
-from pdf import (
-    open_pdf_document,
-    get_pages_with_credit_notes,
-    replace_matches_in_pdf,
-    save_modified_document,
-)
 from config import INPUT_DIR, OUTPUT_DIR
+from src.lib.file_service import FileService
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+file_service: FileService = FileService(INPUT_DIR, OUTPUT_DIR)
 
 
 def save_uploaded_file(file):
@@ -35,25 +25,6 @@ def save_uploaded_file(file):
     f.write(file.stream.read())
     f.close()
     return save_path
-
-
-def process_file(file_path):
-    try:
-        document = open_pdf_document(file_path)
-        pages_with_credit_notes = get_pages_with_credit_notes(document)
-        modified_document = replace_matches_in_pdf(
-            document, pages_with_credit_notes, "CN"
-        )
-        save_modified_document(modified_document, document.name)
-    except (
-        PathNotFoundException,
-        PathNotPDFFileException,
-        NothingToModifyException,
-        PDFCreationFailException,
-    ) as err:
-        flash(err.__str__())
-    finally:
-        os.remove(file_path)
 
 
 @app.route("/")
@@ -78,8 +49,10 @@ def upload():
         flash("A file is required to upload")
         return redirect(url_for("home"))
 
-    uploaded_file = save_uploaded_file(file)
-    process_file(uploaded_file)
+    uploaded_file = save_uploaded_file(file).as_posix()
+    error = file_service.handle_file_processing(uploaded_file)
+    if error:
+        flash(error)
     return redirect(url_for("home"))
 
 
@@ -91,8 +64,10 @@ def bulk_upload():
         return redirect(url_for("home"))
 
     for file in files:
-        uploaded_file = save_uploaded_file(file)
-        process_file(uploaded_file)
+        uploaded_file = save_uploaded_file(file).as_posix()
+        error = file_service.handle_file_processing(uploaded_file)
+        if error:
+            flash(error)
     return redirect(url_for("home"))
 
 
@@ -113,5 +88,7 @@ def view_pdf(filename):
     return send_from_directory(OUTPUT_DIR, filename)
 
 
-if __name__ == "__main__":
-    app.run()
+def main():
+    from waitress import serve
+
+    serve(app, host="0.0.0.0", port=5000)

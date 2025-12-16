@@ -8,10 +8,15 @@ pymupdf = "*"
 flask = "*"
 numpy = "*"
 python-dotenv = "*"
+waitress = "*"
+flaskwebgui = "*"
+ttkbootstrap = "*"
+platformdirs = "*"
 
 [dev-packages]
 pytest = "*"
 parameterized = "*"
+pyinstaller = "*"
 
 [requires]
 python_version = "3.13"
