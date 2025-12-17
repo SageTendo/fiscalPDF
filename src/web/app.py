@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 
-from config import INPUT_DIR, OUTPUT_DIR
+from src.config import INPUT_DIR, OUTPUT_DIR
 from src.lib.file_service import FileService
 
 app = Flask(__name__)

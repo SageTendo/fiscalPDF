@@ -1,13 +1,12 @@
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from platformdirs import user_documents_dir
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
+from ttkbootstrap.constants import SUCCESS, OUTLINE
 
 from datetime import datetime
 
-from config import INPUT_DIR, OUTPUT_DIR
+from src.config import INPUT_DIR, OUTPUT_DIR
 from src.lib.file_service import FileService
 
 

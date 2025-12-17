@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 
 from dotenv import load_dotenv
 from platformdirs import user_documents_dir
