@@ -12,7 +12,7 @@ from flask import (
 )
 
 from src.config import INPUT_DIR, OUTPUT_DIR
-from src.lib.file_service import FileService
+from src.core.file_service import FileService
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)

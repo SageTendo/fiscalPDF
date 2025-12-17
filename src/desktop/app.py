@@ -1,13 +1,14 @@
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from platformdirs import user_documents_dir
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import SUCCESS, OUTLINE
 
 from datetime import datetime
 
 from src.config import INPUT_DIR, OUTPUT_DIR
-from src.lib.file_service import FileService
+from src.core.file_service import FileService
 
 
 class FiscalPDFApp(tk.Tk):
@@ -121,7 +122,7 @@ class FiscalPDFApp(tk.Tk):
             parent=self,
             title="Select PDF",
             filetypes=[("PDF files", "*.pdf")],
-            initialdir=os.getcwd(),
+            initialdir=user_documents_dir(),
         )
         if file:
             self._process_and_refresh([file])
@@ -131,7 +132,7 @@ class FiscalPDFApp(tk.Tk):
             parent=self,
             title="Select PDFs",
             filetypes=[("PDF files", "*.pdf")],
-            initialdir=os.getcwd(),
+            initialdir=user_documents_dir(),
         )
         if files:
             self._process_and_refresh(files)
@@ -186,7 +187,11 @@ class FiscalPDFApp(tk.Tk):
         file = self._selected_file()
         if not file:
             return
-        self.file_service.handle_open(file)
+
+        try:
+            self.file_service.handle_open(file)
+        except (OSError, FileNotFoundError, NotImplementedError) as e:
+            messagebox.showerror("Error", str(e))
 
     def _delete_file(self):
         files = self._selected_files()
@@ -198,7 +203,10 @@ class FiscalPDFApp(tk.Tk):
             return
 
         for file in files:
-            self.file_service.handle_delete(file)
+            try:
+                self.file_service.handle_delete(file)
+            except OSError as e:
+                messagebox.showerror("Error", str(e))
         self._refresh_table()
 
     # -------------------------

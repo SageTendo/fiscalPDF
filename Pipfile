@@ -10,10 +10,11 @@ python-dotenv = "*"
 waitress = "*"
 ttkbootstrap = "*"
 platformdirs = "*"
+pyinstaller = "*"
 
 [dev-packages]
 pytest = "*"
 parameterized = "*"
 
 [requires]
-python_version = "3.13"
+python_version = "3.14"
