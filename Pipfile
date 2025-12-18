@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pymupdf = "*"
+flask = "*"
+waitress = "*"
+ttkbootstrap = "*"
+platformdirs = "*"
+pyinstaller = "*"
+
+[dev-packages]
+pytest = "*"
+parameterized = "*"
+
+[requires]
+python_version = "3.14"
